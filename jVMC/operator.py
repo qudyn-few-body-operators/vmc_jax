@@ -88,6 +88,66 @@ def Sm(idx):
     return {'idx': idx, 'map': jnp.array([1,0],dtype=np.int32), 'matEls':jnp.array([0.0,1.0],dtype=global_defs.tReal), 'diag': False}
 
 
+def Px(idx):
+    """Returns a :math:`\hat\sigma^x` Pauli operator in the Pauli-operator basis
+
+    Args:
+
+    * ``idx``: Index of the local Hilbert space.
+
+    Returns:
+        Dictionary defining :math:`\hat\sigma^x` Pauli operator
+
+    """
+
+    return dict(
+        idx=idx,
+        map=jnp.array([0, 0, 3, 2], dtype=np.int32),
+        matEls=jnp.array([0.0, 0.0, 2.0j, -2.0j], dtype=global_defs.tComplex),
+        diag=False
+    )
+
+
+def Py(idx):
+    """Returns a :math:`\hat\sigma^y` Pauli operator in the Pauli-operator basis
+
+    Args:
+
+    * ``idx``: Index of the local Hilbert space.
+
+    Returns:
+        Dictionary defining :math:`\hat\sigma^y` Pauli operator
+
+    """
+
+    return dict(
+        idx=idx,
+        map=jnp.array([0, 3, 0, 1], dtype=np.int32),
+        matEls=jnp.array([0.0, -2.0j, 0.0, 2.0j], dtype=global_defs.tComplex),
+        diag=False
+    )
+
+
+def Pz(idx):
+    """Returns a :math:`\hat\sigma^z` Pauli operator in the Pauli-operator basis
+
+    Args:
+
+    * ``idx``: Index of the local Hilbert space.
+
+    Returns:
+        Dictionary defining :math:`\hat\sigma^z` Pauli operator
+
+    """
+
+    return dict(
+        idx=idx,
+        map=jnp.array([0, 2, 1, 0], dtype=np.int32),
+        matEls=jnp.array([0.0, 2.0j, -2.0j, 0.0], dtype=global_defs.tComplex),
+        diag=False
+    )
+
+
 import copy
 def scal_opstr(a,op):
     """Add prefactor to operator string
@@ -117,7 +177,7 @@ def apply_fun(s,matEl,idx,sMap,matEls):
 def apply_multi(s,matEl,opIdx,opMap,opMatEls,diag):
     for idx,mp,me in zip(opIdx,opMap,opMatEls):
         s,matEl=vmap(apply_fun, in_axes=(0,0,None,None,None))(s,matEl,idx,mp,me)
-    
+
     return s,matEl
 
 
@@ -125,7 +185,7 @@ class Operator:
     """This class provides functionality to compute operator matrix elements
 
     Initializer arguments:
-        
+
         * ``lDim``: Dimension of local Hilbert space.
     """
 
@@ -286,7 +346,7 @@ class Operator:
         self.matEl = self._set_zero_to_zero_pmapd(self.matEl, idx[...,:jnp.max(self.numNonzero)], self.numNonzero)
         #self.sp = self._array_idx_pmapd(self.sp, idx[:,:,:jnp.max(self.numNonzero)])
         self.sp = self._array_idx_pmapd(self.sp, idx[...,:jnp.max(self.numNonzero)])
-        
+
         return self._flatten_pmapd(self.sp), self.matEl
 
 
@@ -313,7 +373,7 @@ class Operator:
         Returns:
             :math:`O_{loc}(s)` for each configuration :math:`s`.
         """
-      
+
         return self._get_O_loc_pmapd(self.matEl, logPsiS, logPsiSP)
 
 
