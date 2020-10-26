@@ -105,7 +105,7 @@ def Px(idx):
     return dict(
         idx=idx,
         map=jnp.array([0, 0, 3, 2], dtype=np.int32),
-        matEls=jnp.array([0.0, 0.0, 2.0j, -2.0j], dtype=global_defs.tComplex),
+        matEls=jnp.array([0.0, 0.0, 2.0j, -2.0j], dtype=opDtype),
         diag=False
     )
 
@@ -125,7 +125,7 @@ def Py(idx):
     return dict(
         idx=idx,
         map=jnp.array([0, 3, 0, 1], dtype=np.int32),
-        matEls=jnp.array([0.0, -2.0j, 0.0, 2.0j], dtype=global_defs.tComplex),
+        matEls=jnp.array([0.0, -2.0j, 0.0, 2.0j], dtype=opDtype),
         diag=False
     )
 
@@ -145,7 +145,7 @@ def Pz(idx):
     return dict(
         idx=idx,
         map=jnp.array([0, 2, 1, 0], dtype=np.int32),
-        matEls=jnp.array([0.0, 2.0j, -2.0j, 0.0], dtype=global_defs.tComplex),
+        matEls=jnp.array([0.0, 2.0j, -2.0j, 0.0], dtype=opDtype),
         diag=False
     )
 
