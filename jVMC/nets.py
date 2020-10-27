@@ -496,3 +496,78 @@ class CpxRNN(nn.Module):
         return jnp.transpose( res[1] )#, 0.5 * jnp.sum(res[0], axis=0)
 
 # ** end class CpxRNN
+
+
+
+class OpFFN(nn.Module):
+    """Feed-forward network.
+    """
+
+    def apply(self, s, layers=[10], bias=False, actFun=[jax.nn.elu,]):
+        
+        for l in range(len(actFun),len(layers)+1):
+            actFun.append(actFun[-1])
+
+        s = jax.nn.one_hot(s, 4).ravel()
+        for l,fun in zip(layers,actFun[:-1]):
+            s = fun(
+                    nn.Dense(s, features=l, bias=bias, dtype=global_defs.tReal, 
+                                kernel_init=jax.nn.initializers.lecun_normal(dtype=global_defs.tReal), 
+                                bias_init=partial(jax.nn.initializers.zeros, dtype=global_defs.tReal))
+                )
+
+        return jnp.sum(actFun[-1]( nn.Dense(s, features=1, bias=bias, dtype=global_defs.tReal,
+                                kernel_init=jax.nn.initializers.lecun_normal(dtype=global_defs.tReal), 
+                                bias_init=partial(jax.nn.initializers.zeros, dtype=global_defs.tReal))
+                     ))
+
+# ** end class FFN
+
+
+class OpRNN(nn.Module):
+    """Recurrent neural network.
+    """
+
+    def apply(self, x, L=10, hiddenSize=10, depth=1, inputDim=4, actFun=nn.elu, initScale=1.0):
+        
+        rnnCell = RNNCellStack.shared(hiddenSize=hiddenSize, outDim=inputDim, actFun=actFun, initScale=initScale, name="myCell")
+
+        state = jnp.zeros((depth, hiddenSize))
+
+        def rnn_cell(carry, x):
+            newCarry, out = rnnCell(carry[0],carry[1])
+            probs = out**2
+            nrm = jnp.sum(probs)
+            out /= jnp.sqrt(nrm)
+            res = jnp.sum( out * x, axis=-1 )
+            return (newCarry, x), res
+      
+        _, probs = jax.lax.scan(rnn_cell, (state, jnp.zeros(inputDim)), jax.nn.one_hot(x,inputDim))
+
+        return jnp.prod(probs, axis=0)
+
+
+    @nn.module_method
+    def sample(self,batchSize,key,L,hiddenSize=10,depth=1,inputDim=4,actFun=nn.elu, initScale=1.0):
+        """sampler
+        """
+        
+        rnnCell = RNNCellStack.shared(hiddenSize=hiddenSize, outDim=inputDim, actFun=actFun, initScale=initScale, name="myCell")
+
+        outputs = jnp.asarray(np.zeros((batchSize,L,L)))
+        
+        state = jnp.zeros((batchSize, depth, hiddenSize))
+
+        def rnn_cell(carry, x):
+            newCarry, out = rnnCell(carry[0],carry[1])
+            probs = out**2
+            sampleOut = jax.random.categorical( x, jnp.log(probs) )
+            sample = jax.nn.one_hot( sampleOut, inputDim )
+            return (newCarry, sample), sampleOut
+ 
+        keys = jax.random.split(key,L)
+        _, res = jax.lax.scan( rnn_cell, (state, jnp.zeros((batchSize,inputDim))), keys )
+
+        return jnp.transpose( res )
+
+# ** end class RNN
