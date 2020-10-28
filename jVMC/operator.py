@@ -150,6 +150,66 @@ def Pz(idx):
     )
 
 
+def PxDiag(idx):
+    """Returns a :math:`\hat\sigma^x` Pauli operator in the Pauli-operator basis
+
+    Args:
+
+    * ``idx``: Index of the local Hilbert space.
+
+    Returns:
+        Dictionary defining :math:`\hat\sigma^x` Pauli operator
+
+    """
+
+    return dict(
+        idx=idx,
+        map=jnp.array([0, 1, 2, 3], dtype=np.int32),
+        matEls=jnp.array([0.0, -1.0, 0.0, 0.0], dtype=opDtype),
+        diag=True
+    )
+
+
+def PyDiag(idx):
+    """Returns a :math:`\hat\sigma^y` Pauli operator in the Pauli-operator basis
+
+    Args:
+
+    * ``idx``: Index of the local Hilbert space.
+
+    Returns:
+        Dictionary defining :math:`\hat\sigma^y` Pauli operator
+
+    """
+
+    return dict(
+        idx=idx,
+        map=jnp.array([0, 1, 2, 3], dtype=np.int32),
+        matEls=jnp.array([0.0, 0.0, -1.0, 0.0], dtype=opDtype),
+        diag=True
+    )
+
+
+def PzDiag(idx):
+    """Returns a :math:`\hat\sigma^z` Pauli operator in the Pauli-operator basis
+
+    Args:
+
+    * ``idx``: Index of the local Hilbert space.
+
+    Returns:
+        Dictionary defining :math:`\hat\sigma^z` Pauli operator
+
+    """
+
+    return dict(
+        idx=idx,
+        map=jnp.array([0, 1, 2, 3], dtype=np.int32),
+        matEls=jnp.array([0.0, 0.0, 0.0, -1.0], dtype=opDtype),
+        diag=True
+    )
+
+
 import copy
 def scal_opstr(a,op):
     """Add prefactor to operator string
