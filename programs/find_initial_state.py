@@ -47,7 +47,7 @@ global_defs.set_pmap_devices(jax.devices()[mpi.rank % jax.device_count()])
 print(" -> Rank %d working with device %s" % (mpi.rank, global_defs.devices()), flush=True)
 
 # L = inp["system"]["L"]
-L = 10
+L = 2
 
 # Initialize output manager
 # outp = OutputManager(wdir+inp["general"]["data_output"], append=inp["general"]["append_data"])
@@ -55,15 +55,14 @@ L = 10
 
 # Set up hamiltonian for ground state search
 hamiltonianGS = op.Operator()
-hamiltonianGS.add(op.scal_opstr(
-    1,
+hamiltonianGS.add(
     (
         op.PzDiag(0),
         op.PzDiag(1)
     )
-))
+)
 
-sampler = jVMC.sampler.ExactSampler(L)
+sampler = jVMC.sampler.ExactSampler(L, lDim=4)
 
 
 print(sampler.get_basis().shape)
