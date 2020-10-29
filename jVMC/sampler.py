@@ -45,9 +45,9 @@ class MCMCSampler:
 
     Sampling is automatically distributed accross MPI processes and locally available \
     devices.
-    
+
     Initializer arguments:
-    
+
     * ``key``: An instance of ``jax.random.PRNGKey``.
     * ``updateProposer``: A function to propose updates for the MCMC algorithm. \
     It is called as ``updateProposer(key, config, **kwargs)``, where ``key`` is an instance of \
@@ -67,7 +67,7 @@ class MCMCSampler:
         """Initializes the MCMCSampler class.
 
         Args:
-        
+
         * ``key``: An instance of ``jax.random.PRNGKey``.
         * ``updateProposer``: A function to propose updates for the MCMC algorithm. \
         It is called as ``updateProposer(key, config, **kwargs)``, where ``key`` is an instance of \
@@ -97,7 +97,7 @@ class MCMCSampler:
         self.thermalizationSweeps = thermalizationSweeps
         self.sweepSteps = sweepSteps
         self.numSamples = numSamples
-        
+
         self.numChains = numChains
 
         # jit'd member functions
@@ -109,7 +109,7 @@ class MCMCSampler:
         """Set default number of samples.
 
         Args:
-        
+
         * ``N``: Number of samples.
         """
 
@@ -169,12 +169,12 @@ class MCMCSampler:
 
 
     def _get_samples_gen(self, net, numSamples):
-        
+
         def dc():
             if global_defs.usePmap:
                 return global_defs.device_count()
             return 1
-        
+
         numSamples = mpi.distribute_sampling(numSamples, localDevices=dc())
         numSamplesStr = str(numSamples)
 
@@ -200,7 +200,7 @@ class MCMCSampler:
 
         # Initialize sampling stuff
         self._mc_init(net)
-        
+
         def dc():
             if global_defs.usePmap:
                 return global_defs.device_count()
@@ -247,14 +247,14 @@ class MCMCSampler:
         return meta, configs.reshape((configs.shape[0]*configs.shape[1], -1))
 
     def _sweep(self, states, logPsiSq, key, numProposed, numAccepted, net, numSteps, updateProposer, updateProposerArg):
-        
+
         def perform_mc_update(i, carry):
-            
+
             # Generate update proposals
             newKeys = random.split(carry[2],carry[0].shape[0]+1)
             carryKey = newKeys[-1]
             newStates = vmap(updateProposer, in_axes=(0, 0, None))(newKeys[:len(carry[0])], carry[0], updateProposerArg)
-            #newStates = carry[0] 
+            #newStates = carry[0]
 
             # Compute acceptance probabilities
             newLogPsiSq = jax.vmap(lambda x,y: 2.*jnp.real(x(y)), in_axes=(None,0))(net,newStates)
@@ -284,14 +284,14 @@ class MCMCSampler:
 
 
     def _mc_init(self, net):
-        
+
         # Initialize logPsiSq
         self.logPsiSq = 2. * net.real_coefficients(self.states)
 
         shape = (1,)
         if global_defs.usePmap:
             shape = (global_defs.device_count(),) + shape
- 
+
         self.numProposed = jnp.zeros(shape, dtype=np.int64)
         self.numAccepted = jnp.zeros(shape, dtype=np.int64)
 
@@ -320,7 +320,7 @@ class ExactSampler:
     sampling.
 
     Initialization arguments:
-    
+
     * sampleShape: Shape of computational basis states.
     * lDim: Local Hilbert space dimension.
     """
@@ -362,7 +362,7 @@ class ExactSampler:
         self.numStatesPerDevice = jnp.array(self.numStatesPerDevice)
 
         totalNumStates = deviceCount * self.numStatesPerDevice[0]
-        
+
         if not global_defs.usePmap:
             self.numStatesPerDevice = self.numStatesPerDevice[0]
 
@@ -374,6 +374,8 @@ class ExactSampler:
             self.basis = self._get_basis_ldim2_pmapd(self.basis, intReps)
         else:
             self.basis = self._get_basis_pmapd(self.basis, intReps, self.lDim)
+
+        return self.basis
 
 
     def _get_basis_ldim2(self, states, intReps):
@@ -453,9 +455,9 @@ class ExactSampler:
 
         nrm = mpi.global_sum(p)
         p = self._normalize_pmapd(p,nrm)
-        
+
         self.lastNorm += 0.5 * jnp.log(nrm)
- 
+
         return self.basis, logPsi, p
 
 
@@ -488,7 +490,7 @@ if __name__ == "__main__":
 
     configs.block_until_ready()
     print("total time:", time.perf_counter()-tic)
-    
+
     tic=time.perf_counter()
     configs, logspi, p = sampler.sample(psiC, numSamples=100000)
     configs.block_until_ready()
@@ -503,9 +505,9 @@ if __name__ == "__main__":
     rbm = nets.RBM.partial(numHidden=2,bias=False)
     _, params = rbm.init_by_shape(random.PRNGKey(0),[(L,)])
     rbmModel = nn.Model(rbm,params)
-    
+
     psi = NQS(rnnModel, rbmModel)
-    
+
     tic=time.perf_counter()
     configs, logpsi, p = sampler.sample(psi, numSamples=500000)
     configs.block_until_ready()
